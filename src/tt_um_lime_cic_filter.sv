@@ -147,7 +147,7 @@ module tt_um_lime_cic_filter (
             {1'b0, 4'hC}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hD}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hE}: debug_uo_out = 8'b0;                                                          // Reserved
-            {1'b0, 4'hF}: debug_uo_out = 8'b0;                                                          // Reserved
+            {1'b0, 4'hF}: debug_uo_out = 8'h4B;                                                          // Reserved
 
             // Second Order CIC Debug Modes (ui_in[1] = 1)
             {1'b1, 4'h0}: debug_uo_out = cic2_output_data[REGISTER_WIDTH2-1:REGISTER_WIDTH2-8];      // CIC2 output data MSB
