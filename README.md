@@ -1,6 +1,6 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# Tiny Tapeout Verilog Project
 
 - [Read the documentation for project](docs/info.md)
 
@@ -10,33 +10,34 @@ Tiny Tapeout is an educational project that aims to make it easier and cheaper t
 
 To learn more and get started, visit https://tinytapeout.com.
 
-## Set up your Verilog project
+## CIC Decimation filter for Sigma Delta Modulator
 
-1. Add your Verilog files to the `src` folder.
-2. Edit the [info.yaml](info.yaml) and update information about your project, paying special attention to the `source_files` and `top_module` properties. If you are upgrading an existing Tiny Tapeout project, check out our [online info.yaml migration tool](https://tinytapeout.github.io/tt-yaml-upgrade-tool/).
-3. Edit [docs/info.md](docs/info.md) and add a description of your project.
-4. Adapt the testbench to your design. See [test/README.md](test/README.md) for more information.
+This project is the first part of the plan for taping out a Sigma-Delta ADC (Analog to Digital Converter). Although this Mixed-Signal design is on its way, it is not ready to be put on a shuttle. Therefore I will be only taping out the decimation filter of the ADC to test it and get a feeling of the tape-out process. At a later point I hope to combine this together with the analog part (the modulator).
 
-The GitHub action will automatically build the ASIC files using [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
+Simply said, a Sigma Delta ADC consist out of two main parts, a modulator, and a filter. In my case the design consists of a modulator which will convert an analog sigmal into a fast switching 1-bit signal which will have an average propotional to the analog input signal. Although there are major differences, it has a lot of similarities to a PWM signal. 
+The second part will be a decimation low pass filter which will take this 1-bit signal and convert it to a multi-bit digital signal at a lower rate (10 or 20 bits depending on the selected filter).
 
-## Enable GitHub actions to build the results page
+As decimation filter, I decided to go with a Cascased Integrator-Comb filter. The reason I chose for such filter is that is it relatively small for its performance (amount of registers) and a decimation part can be nicely build into it, which reduces the amount of registers needed for the Comb part. I recommend reading the following:
+- [A Beginners guide to Cascaded Intergrator Comb Filters](https://www.dsprelated.com/showarticle/1337.php)
 
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part)
+I integrated two comb filters, which can be selected using the ui[1] bit. The first one (1'b0) is the first order implementation, and the second one (1'b1) is a Second order filter.
 
-## Resources
+For both designs, I used a decimation ratio of 1024 (2^10). This means that the output signals changes for every 1024 input values.
 
-- [FAQ](https://tinytapeout.com/faq/)
-- [Digital design lessons](https://tinytapeout.com/digital_design/)
-- [Learn how semiconductors work](https://tinytapeout.com/siliwiz/)
-- [Join the community](https://tinytapeout.com/discord)
-- [Build your design locally](https://www.tinytapeout.com/guides/local-hardening/)
+### First Order CIC filter:
 
-## What next?
+The first design is a first order CIC filter, which means it has a single integrator, and a single comb stage. It has a 10 bit output. 
 
-- [Submit your design to the next shuttle](https://app.tinytapeout.com/).
-- Edit [this README](README.md) and explain your design, how it works, and how to test it.
-- Share your project on your social network of choice:
-  - LinkedIn [#tinytapeout](https://www.linkedin.com/search/results/content/?keywords=%23tinytapeout) [@TinyTapeout](https://www.linkedin.com/company/100708654/)
-  - Mastodon [#tinytapeout](https://chaos.social/tags/tinytapeout) [@matthewvenn](https://chaos.social/@matthewvenn)
-  - X (formerly Twitter) [#tinytapeout](https://twitter.com/hashtag/tinytapeout) [@tinytapeout](https://twitter.com/tinytapeout)
-  - Bluesky [@tinytapeout.com](https://bsky.app/profile/tinytapeout.com)
+![First Order CIC filter [1]](CIC_digital_filters_fig1.png)
+
+### Second Order CIC filter:
+
+The latter is a second order CIC filter, which means it has 2 integrators, and two comb stages. This part has 20 bits output (not all bits can be seen at the same time at the output).
+
+![Second Order CIC filter](CIC_digital_filters_fig2.png)
+
+
+
+
+[1] https://www.dsprelated.com/showarticle/1337.php
+
