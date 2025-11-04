@@ -214,7 +214,7 @@ module tt_um_lime_cic_filter (
 
     
     // Output assignments
-    assign uio_oe = ((debug_select==4'h4) & ui_in[2]) ? 8'b0 : 8'b1;  // All bidirectional pins as outputs (unless testing input)
+    assign uio_oe = ((debug_select==4'h4) & ui_in[2]) ? 8'b00 : 8'hFF;  // All bidirectional pins as outputs (unless testing input)
     assign uo_out = debug_uo_out;
     assign uio_out = debug_uio_out;
 
