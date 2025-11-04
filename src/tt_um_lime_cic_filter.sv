@@ -37,25 +37,26 @@ module tt_um_lime_cic_filter (
 
     // First Order CIC
     localparam int REGISTER_WIDTH1 = 10;
+    localparam int DECIMATION_FACTOR = 10;
 
     // Internal signals for CIC
     logic [REGISTER_WIDTH1-1:0] cic_output_data;
-    logic [REGISTER_WIDTH1:0] cic_integrator_output;
-    logic [REGISTER_WIDTH1:0] cic_comb_output;
+    logic [REGISTER_WIDTH1:0] cic_integrator;
+    logic [REGISTER_WIDTH1:0] cic_comb;
     logic cic_output_clk;
 
     // Instantiate first order CIC module
     cic #(
         .register_width(REGISTER_WIDTH1)
-        , .decimation_factor(10)
+        , .decimation_factor(DECIMATION_FACTOR)
     ) u_cic_first_order (
         .clk_i(clk)
         , .rstn_i(rst_n)
         , .modulator_data_i(ui_in[0])  // Use LSB of ui_in as modulator data
-        , .cic_output_o(cic_output_data)
-        , .integrator_output_o(cic_integrator_output)  // Not connected for now
-        , .comb_output_o(cic_comb_output)  // Not connected for now
-        , .cic_output_clk_o(cic_output_clk)   // Not connected for now
+        , .cic_o(cic_output_data)
+        , .integrator_o(cic_integrator)  // Not connected for now
+        , .comb_o(cic_comb)  // Not connected for now
+        , .cic_clk_o(cic_output_clk)   // Not connected for now
     );
 
 
@@ -67,30 +68,30 @@ module tt_um_lime_cic_filter (
     logic cic2_output_clk;
 
     // Internal signals for CIC2 debug outputs
-    logic [REGISTER_WIDTH2:0] cic2_integrator1_reg;
-    logic [REGISTER_WIDTH2:0] cic2_integrator2_reg;
-    logic [REGISTER_WIDTH2:0] cic2_comb1_reg;
-    logic [REGISTER_WIDTH2:0] cic2_comb2_reg;
+    logic [REGISTER_WIDTH2:0] cic2_integrator1;
+    logic [REGISTER_WIDTH2:0] cic2_integrator2;
+    logic [REGISTER_WIDTH2:0] cic2_comb1;
+    logic [REGISTER_WIDTH2:0] cic2_comb2;
 
     // Instantiate second order CIC module
     cic2 #(
         .register_width(REGISTER_WIDTH2)
-        , .decimation_factor(10)
+        , .decimation_factor(DECIMATION_FACTOR)
     ) u_cic_second_order (
         .clk_i(clk)
         , .rstn_i(rst_n)
         , .modulator_data_i(ui_in[0])  // Use LSB of ui_in as modulator data
-        , .cic_output_data_o(cic2_output_data)
-        , .cic_output_clk_o(cic2_output_clk)
+        , .cic_data_o(cic2_output_data)
+        , .cic_clk_o(cic2_output_clk)
         // Debug outputs
-        , .integrator1_reg_o(cic2_integrator1_reg)
-        , .integrator2_reg_o(cic2_integrator2_reg)
-        , .comb1_reg_o(cic2_comb1_reg)
-        , .comb2_reg_o(cic2_comb2_reg)
+        , .integrator1_o(cic2_integrator1)
+        , .integrator2_o(cic2_integrator2)
+        , .comb1_o(cic2_comb1)
+        , .comb2_o(cic2_comb2)
     );
 
     // =============================================================================
-    // DEBUG SIGNAL SELECTION SYSTEM
+    // OUTPUT ASSIGNMENTS
     // =============================================================================
     // Debug select signal: ui_in[7:4] (4-bit selector for 16 debug modes)
     // CIC filter select: ui_in[1] (0=First order CIC, 1=Second order CIC)
@@ -132,16 +133,16 @@ module tt_um_lime_cic_filter (
         case ({ui_in[1], debug_select})
             // First Order CIC Debug Modes (ui_in[1] = 0)
             {1'b0, 4'h0}: debug_uo_out = cic_output_data[REGISTER_WIDTH1-1:REGISTER_WIDTH1-8];          // CIC1 output data MSB
-            {1'b0, 4'h1}: debug_uo_out = cic_integrator_output[REGISTER_WIDTH1:REGISTER_WIDTH1-7];    // CIC1 integrator MSB
-            {1'b0, 4'h2}: debug_uo_out = cic_comb_output[REGISTER_WIDTH1:REGISTER_WIDTH1-7];          // CIC1 comb MSB
+            {1'b0, 4'h1}: debug_uo_out = cic_integrator[REGISTER_WIDTH1:REGISTER_WIDTH1-7];    // CIC1 integrator MSB
+            {1'b0, 4'h2}: debug_uo_out = cic_comb[REGISTER_WIDTH1:REGISTER_WIDTH1-7];          // CIC1 comb MSB
             {1'b0, 4'h3}: debug_uo_out = {ui_in};                                                       // Input bits monitoring
             {1'b0, 4'h4}: debug_uo_out = {uio_in};                                                      // Input IO monitoring
             {1'b0, 4'h5}: debug_uo_out = {rst_n, clk, ena, 4'b0, cic_output_clk};                       // Status and control signals
             {1'b0, 4'h6}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'h7}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'h8}: debug_uo_out = {cic_output_data[REGISTER_WIDTH1-9:REGISTER_WIDTH1-10], 5'b0, cic_output_clk};   // CIC1 output data LSB
-            {1'b0, 4'h9}: debug_uo_out = {cic_integrator_output[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 integrator LSB
-            {1'b0, 4'hA}: debug_uo_out = {cic_comb_output[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 comb LSB
+            {1'b0, 4'h9}: debug_uo_out = {cic_integrator[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 integrator LSB
+            {1'b0, 4'hA}: debug_uo_out = {cic_comb[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 comb LSB
             {1'b0, 4'hB}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hC}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hD}: debug_uo_out = 8'b0;                                                          // Reserved
@@ -151,14 +152,14 @@ module tt_um_lime_cic_filter (
             // Second Order CIC Debug Modes (ui_in[1] = 1)
             {1'b1, 4'h0}: debug_uo_out = cic2_output_data[REGISTER_WIDTH2-1:REGISTER_WIDTH2-8];      // CIC2 output data MSB
             {1'b1, 4'h1}: debug_uo_out = cic2_output_data[14:7];                                     // CIC2 output data LSB
-            {1'b1, 4'h2}: debug_uo_out = cic2_integrator1_reg[REGISTER_WIDTH2:REGISTER_WIDTH2-7];  // CIC2 integrator1 MSB
-            {1'b1, 4'h3}: debug_uo_out = cic2_integrator1_reg[14:7];                                 // CIC2 integrator1 LSB    
-            {1'b1, 4'h4}: debug_uo_out = cic2_integrator2_reg[REGISTER_WIDTH2:REGISTER_WIDTH2-7];  // CIC2 integrator2 MSB
-            {1'b1, 4'h5}: debug_uo_out = cic2_integrator2_reg[14:7];                                 // CIC2 integrator2 LSB
-            {1'b1, 4'h6}: debug_uo_out = cic2_comb1_reg[REGISTER_WIDTH2:REGISTER_WIDTH2-7];        // CIC2 comb1 MSB
-            {1'b1, 4'h7}: debug_uo_out = cic2_comb1_reg[14:7];                                       // CIC2 comb1 LSB 
-            {1'b1, 4'h8}: debug_uo_out = cic2_comb2_reg[REGISTER_WIDTH2:REGISTER_WIDTH2-7];        // CIC2 comb2 MSB
-            {1'b1, 4'h9}: debug_uo_out = cic2_comb2_reg[14:7];                                       // CIC2 comb2 LSB
+            {1'b1, 4'h2}: debug_uo_out = cic2_integrator1[REGISTER_WIDTH2:REGISTER_WIDTH2-7];  // CIC2 integrator1 MSB
+            {1'b1, 4'h3}: debug_uo_out = cic2_integrator1[14:7];                                 // CIC2 integrator1 LSB    
+            {1'b1, 4'h4}: debug_uo_out = cic2_integrator2[REGISTER_WIDTH2:REGISTER_WIDTH2-7];  // CIC2 integrator2 MSB
+            {1'b1, 4'h5}: debug_uo_out = cic2_integrator2[14:7];                                 // CIC2 integrator2 LSB
+            {1'b1, 4'h6}: debug_uo_out = cic2_comb1[REGISTER_WIDTH2:REGISTER_WIDTH2-7];        // CIC2 comb1 MSB
+            {1'b1, 4'h7}: debug_uo_out = cic2_comb1[14:7];                                       // CIC2 comb1 LSB 
+            {1'b1, 4'h8}: debug_uo_out = cic2_comb2[REGISTER_WIDTH2:REGISTER_WIDTH2-7];        // CIC2 comb2 MSB
+            {1'b1, 4'h9}: debug_uo_out = cic2_comb2[14:7];                                       // CIC2 comb2 LSB
             {1'b1, 4'hA}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b1, 4'hB}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b1, 4'hC}: debug_uo_out = 8'b0;                                                          // Reserved
@@ -174,8 +175,8 @@ module tt_um_lime_cic_filter (
         case ({ui_in[1], debug_select})
             // First Order CIC Debug Modes (ui_in[1] = 0)
             {1'b0, 4'h0}: debug_uio_out = {cic_output_data[REGISTER_WIDTH1-9:REGISTER_WIDTH1-10], 5'b0, cic_output_clk};   // CIC1 output data LSB + clk
-            {1'b0, 4'h1}: debug_uio_out = {cic_integrator_output[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 integrator LSB + clk
-            {1'b0, 4'h2}: debug_uio_out = {cic_comb_output[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 comb LSB + clk
+            {1'b0, 4'h1}: debug_uio_out = {cic_integrator[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 integrator LSB + clk
+            {1'b0, 4'h2}: debug_uio_out = {cic_comb[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 comb LSB + clk
             {1'b0, 4'h3}: debug_uio_out = {ui_in};                                        // Input monitoring
             {1'b0, 4'h4}: debug_uio_out = 8'h00;                                                                       // Reserved (IO input mode)
             {1'b0, 4'h5}: debug_uio_out = {rst_n, clk, ena, 4'b0, cic_output_clk};                                       // Status and control signals
@@ -193,14 +194,14 @@ module tt_um_lime_cic_filter (
             // Second Order CIC Debug Modes (ui_in[1] = 1)
             {1'b1, 4'h0}: debug_uio_out = {cic2_output_data[REGISTER_WIDTH2-9:REGISTER_WIDTH2-15], cic2_output_clk};     // CIC2 output data mid bits + clk
             {1'b1, 4'h1}: debug_uio_out = {cic2_output_data[6:0], cic2_output_clk};                                      // CIC2 output data LSB + clk
-            {1'b1, 4'h2}: debug_uio_out = {cic2_integrator1_reg[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk}; // CIC2 integrator1 mid bits + clk
-            {1'b1, 4'h3}: debug_uio_out = {cic2_integrator1_reg[6:0], cic2_output_clk};                                  // CIC2 integrator1 LSB + clk
-            {1'b1, 4'h4}: debug_uio_out = {cic2_integrator2_reg[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk}; // CIC2 integrator2 mid bits + clk
-            {1'b1, 4'h5}: debug_uio_out = {cic2_integrator2_reg[6:0], cic2_output_clk};                                  // CIC2 integrator2 LSB + clk
-            {1'b1, 4'h6}: debug_uio_out = {cic2_comb1_reg[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk};       // CIC2 comb1 mid bits + clk
-            {1'b1, 4'h7}: debug_uio_out = {cic2_comb1_reg[6:0], cic2_output_clk};                                        // CIC2 comb1 LSB + clk
-            {1'b1, 4'h8}: debug_uio_out = {cic2_comb2_reg[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk};       // CIC2 comb2 mid bits + clk
-            {1'b1, 4'h9}: debug_uio_out = {cic2_comb2_reg[6:0], cic2_output_clk};                                        // CIC2 comb2 LSB + clk
+            {1'b1, 4'h2}: debug_uio_out = {cic2_integrator1[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk}; // CIC2 integrator1 mid bits + clk
+            {1'b1, 4'h3}: debug_uio_out = {cic2_integrator1[6:0], cic2_output_clk};                                  // CIC2 integrator1 LSB + clk
+            {1'b1, 4'h4}: debug_uio_out = {cic2_integrator2[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk}; // CIC2 integrator2 mid bits + clk
+            {1'b1, 4'h5}: debug_uio_out = {cic2_integrator2[6:0], cic2_output_clk};                                  // CIC2 integrator2 LSB + clk
+            {1'b1, 4'h6}: debug_uio_out = {cic2_comb1[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk};       // CIC2 comb1 mid bits + clk
+            {1'b1, 4'h7}: debug_uio_out = {cic2_comb1[6:0], cic2_output_clk};                                        // CIC2 comb1 LSB + clk
+            {1'b1, 4'h8}: debug_uio_out = {cic2_comb2[REGISTER_WIDTH2-8:REGISTER_WIDTH2-14], cic2_output_clk};       // CIC2 comb2 mid bits + clk
+            {1'b1, 4'h9}: debug_uio_out = {cic2_comb2[6:0], cic2_output_clk};                                        // CIC2 comb2 LSB + clk
             {1'b1, 4'hA}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b1, 4'hB}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b1, 4'hC}: debug_uio_out = 8'h00;                                                                              // Reserved
