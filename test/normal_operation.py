@@ -126,6 +126,8 @@ async def normal_operation(dut):
         match debug_mode:
             case 4:
                 assert dut.uo_out.value == 0xB4
+            case 0xF:
+                assert dut.uo_out.value == 0x4B
             
 
     dut._log.info("Debug mode tests cic2")
