@@ -8,26 +8,16 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-debugging = True
+debugging = False
 
-async def run_test_sequence(dut):
-    """Run the main test sequence"""
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
-
-    dut._log.info("Test project behavior")
-
+async def apply_bitstream(dut):
+    """Apply the bitstream to the DUT"""
+    
     # Read test bitstream
     bitstream_file = os.path.join(os.path.dirname(__file__), "test_bitstream.txt")
     with open(bitstream_file, 'r') as f:
         bitstream = [int(line.strip()) for line in f if line.strip()]
     
-    dut._log.info(f"Loaded bitstream with {len(bitstream)} bits")
-
     # Data capture arrays
     captured_data = []
     prev_uio7 = 0
@@ -53,10 +43,23 @@ async def run_test_sequence(dut):
             captured_data.append(data)
         prev_uio7 = current_uio7
     
-    dut._log.info("Bitstream application completed")
-    
-    # Simple FFT analysis test of captured data
+    return captured_data
 
+
+
+async def run_test_sequence(dut):
+    """Run the main test sequence"""
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 10)
+    dut.rst_n.value = 1
+
+    # Apply bitstream and capture data
+    captured_data = await apply_bitstream(dut)
+        
+    # Simple FFT analysis test of captured data
     dut._log.info(f"Performing FFT on {len(captured_data)} samples")
     data_array = np.array(captured_data, dtype=float)
     fft_result = np.fft.fft(data_array)
@@ -89,6 +92,13 @@ async def run_test_sequence(dut):
         
         dut._log.info(f"Plot saved as {plot_file}")
 
+def set_debug_mode(dut, mode: int):
+    """Set the debug mode for the DUT"""
+    # Set the first bit of ui_in to the bitstream value
+    current_ui_in = int(dut.ui_in.value)
+    # Clear bit 0 and set it to bit_value
+    dut.ui_in.value = (current_ui_in & 0x0F) | (mode * 0x10)
+
 @cocotb.test()
 async def normal_operation(dut):
     dut._log.info("Start")
@@ -105,3 +115,22 @@ async def normal_operation(dut):
     dut.ui_in.value = 2
     await run_test_sequence(dut)
 
+    
+    dut._log.info("Debug mode tests cic1")
+    dut.ui_in.value = 4
+    dut.uio_in.value = 0xB4
+    await ClockCycles(dut.clk, 1)
+    for debug_mode in range(16):
+        set_debug_mode(dut, debug_mode)
+        await apply_bitstream(dut)
+        match debug_mode:
+            case 4:
+                assert dut.uo_out.value == 0xB4
+            
+
+    dut._log.info("Debug mode tests cic2")
+    dut.ui_in.value = 2
+    await ClockCycles(dut.clk, 1)
+    for debug_mode in range(16):
+        set_debug_mode(dut, debug_mode)
+        await apply_bitstream(dut)
