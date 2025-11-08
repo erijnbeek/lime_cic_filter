@@ -17,7 +17,8 @@ module cic2 #(
     output logic [register_width:0] integrator1_o,
     output logic [register_width:0] integrator2_o,
     output logic [register_width:0] comb1_o,
-    output logic [register_width:0] comb2_o
+    output logic [register_width:0] comb2_o,
+    output logic [decimation_factor-1:0] decimation_counter_o
 );
 
     logic [register_width:0] integrator1_reg;
@@ -56,7 +57,7 @@ module cic2 #(
     assign integrator2_o = integrator2_reg;
     assign comb1_o = comb1_reg;
     assign comb2_o = comb2_reg;
-
+    assign decimation_counter_o = decimation_counter_reg;
 endmodule
 
 

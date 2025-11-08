@@ -43,6 +43,7 @@ module tt_um_lime_cic_filter (
     logic [REGISTER_WIDTH1-1:0] cic_output_data;
     logic [REGISTER_WIDTH1:0] cic_integrator;
     logic [REGISTER_WIDTH1:0] cic_comb;
+    logic [DECIMATION_FACTOR-1:0] cic_decimation_counter;
     logic cic_output_clk;
 
     // Instantiate first order CIC module
@@ -56,6 +57,7 @@ module tt_um_lime_cic_filter (
         , .cic_o(cic_output_data)
         , .integrator_o(cic_integrator)  // Not connected for now
         , .comb_o(cic_comb)  // Not connected for now
+        , .decimation_counter_o(cic_decimation_counter)  // Not connected for now
         , .cic_clk_o(cic_output_clk)   // Not connected for now
     );
 
@@ -72,6 +74,7 @@ module tt_um_lime_cic_filter (
     logic [REGISTER_WIDTH2:0] cic2_integrator2;
     logic [REGISTER_WIDTH2:0] cic2_comb1;
     logic [REGISTER_WIDTH2:0] cic2_comb2;
+    logic [DECIMATION_FACTOR-1:0] cic2_decimation_counter;
 
     // Instantiate second order CIC module
     cic2 #(
@@ -88,6 +91,7 @@ module tt_um_lime_cic_filter (
         , .integrator2_o(cic2_integrator2)
         , .comb1_o(cic2_comb1)
         , .comb2_o(cic2_comb2)
+        , .decimation_counter_o(cic2_decimation_counter)
     );
 
     // =============================================================================
@@ -144,7 +148,7 @@ module tt_um_lime_cic_filter (
             {1'b0, 4'h9}: debug_uo_out = {cic_integrator[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 integrator LSB
             {1'b0, 4'hA}: debug_uo_out = {cic_comb[REGISTER_WIDTH1-8:REGISTER_WIDTH1-10], 4'b0, cic_output_clk};  // CIC1 comb LSB
             {1'b0, 4'hB}: debug_uo_out = 8'b0;                                                          // Reserved
-            {1'b0, 4'hC}: debug_uo_out = 8'b0;                                                          // Reserved
+            {1'b0, 4'hC}: debug_uo_out = cic_decimation_counter[DECIMATION_FACTOR-1:2];                 // Decimation Counter MSBs
             {1'b0, 4'hD}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hE}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b0, 4'hF}: debug_uo_out = 8'h4B;                                                          // Reserved
@@ -162,7 +166,7 @@ module tt_um_lime_cic_filter (
             {1'b1, 4'h9}: debug_uo_out = cic2_comb2[14:7];                                       // CIC2 comb2 LSB
             {1'b1, 4'hA}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b1, 4'hB}: debug_uo_out = 8'b0;                                                          // Reserved
-            {1'b1, 4'hC}: debug_uo_out = 8'b0;                                                          // Reserved
+            {1'b1, 4'hC}: debug_uo_out = cic2_decimation_counter[DECIMATION_FACTOR-1:2];                 // Decimation Counter MSBs
             {1'b1, 4'hD}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b1, 4'hE}: debug_uo_out = 8'b0;                                                          // Reserved
             {1'b1, 4'hF}: debug_uo_out = 8'b0;                                                          // Reserved
@@ -186,7 +190,7 @@ module tt_um_lime_cic_filter (
             {1'b0, 4'h9}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b0, 4'hA}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b0, 4'hB}: debug_uio_out = 8'h00;                                                                              // Reserved
-            {1'b0, 4'hC}: debug_uio_out = 8'h00;                                                                              // Reserved
+            {1'b0, 4'hC}: debug_uio_out = {cic_decimation_counter[1:0], 5'b0, cic_output_clk};                                // Decimation Counter LSBs
             {1'b0, 4'hD}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b0, 4'hE}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b0, 4'hF}: debug_uio_out = 8'h00;                                                                              // Reserved
@@ -204,7 +208,7 @@ module tt_um_lime_cic_filter (
             {1'b1, 4'h9}: debug_uio_out = {cic2_comb2[6:0], cic2_output_clk};                                        // CIC2 comb2 LSB + clk
             {1'b1, 4'hA}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b1, 4'hB}: debug_uio_out = 8'h00;                                                                              // Reserved
-            {1'b1, 4'hC}: debug_uio_out = 8'h00;                                                                              // Reserved
+            {1'b1, 4'hC}: debug_uio_out = {cic2_decimation_counter[1:0], 5'b0, cic2_output_clk};                              // Decimation Counter LSBs
             {1'b1, 4'hD}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b1, 4'hE}: debug_uio_out = 8'h00;                                                                              // Reserved
             {1'b1, 4'hF}: debug_uio_out = 8'h00;                                                                              // Reserved

@@ -12,6 +12,7 @@ module cic #(
     output logic [register_width-1:0] cic_o,
     output logic [register_width:0] integrator_o,
     output logic [register_width:0] comb_o,
+    output logic [decimation_factor-1:0] decimation_counter_o,
     output logic cic_clk_o
 );
 
@@ -40,6 +41,7 @@ module cic #(
     assign integrator_o = integrator_reg;
     assign comb_o = comb_reg;
     assign cic_clk_o = decimation_counter_reg[decimation_factor-1];
+    assign decimation_counter_o = decimation_counter_reg;
 
 endmodule
 
